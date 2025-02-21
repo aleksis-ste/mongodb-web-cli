@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mongodb-cli-server:/usr/src/app
+    networks:
+      - mongodb-cli-network
+
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    volumes:
+      - ./mongodb-cli-app:/usr/src/app
+    depends_on:
+      - backend
+    networks:
+      - mongodb-cli-network
+
+networks:
+  mongodb-cli-network:
+    driver: bridge
