@@ -31,6 +31,17 @@ app.use(session({
 let dbClients = {};
 let sessionTimers = {};
 
+const ALLOWED_METHODS = [
+  'find',
+  'findOne',
+  'insertOne',
+  'insertMany',
+  'updateOne',
+  'updateMany',
+  'deleteOne',
+  'deleteMany',
+];
+
 // Clean up inactive sessions 
 function cleanUpInactiveSessions() {
   const now = Date.now();
@@ -44,6 +55,25 @@ function cleanUpInactiveSessions() {
 }
 
 setInterval(cleanUpInactiveSessions, 60 * 1000); // 1 minute
+
+function preprocessCommand(command) {
+  return command.replace(/db\.(\w+)\.(\w+)\((.*)\)/g, (match, collectionName, methodName, args) => {
+    return `db.collection('${collectionName}').${methodName}(${args})`;
+  });
+}
+
+function validateCommand(command) {
+  if (!command.trim().startsWith('db.')) {
+    throw new Error('Invalid command format. Command must start with "db.".');
+  }
+
+  const disallowedPatterns = ['dropDatabase', 'eval', 'runCommand'];
+  for (const pattern of disallowedPatterns) {
+    if (command.includes(pattern)) {
+      throw new Error(`Disallowed operation detected: ${pattern}`);
+    }
+  }
+}
 
 app.post('/databases/connect', async (req, res) => {
   const { connectionString } = req.body;
@@ -100,40 +130,14 @@ app.post('/databases/query', async (req, res) => {
   }
 
   try {
-    // Parse the command string
-    const commandParts = command.match(/^db\.(\w+)\.(find|insertOne|updateOne|deleteOne)\((.*)\)$/);
-    if (!commandParts) {
-      return res.status(400).send({ error: 'Invalid command format' });
-    }
     sessionTimers[sessionId] = Date.now();
 
-    const collectionName = commandParts[1];
-    const operation = commandParts[2];
-    const operationParams = JSON.parse(commandParts[3]);
-
-    const coll = dbClients[sessionId].db.collection(collectionName);
-
-    switch (operation) {
-      case 'find':
-        const findResult = await coll.find(operationParams).toArray();
-        res.status(200).send(findResult);
-        break;
-      case 'insertOne':
-        const insertResult = await coll.insertOne(operationParams);
-        res.status(200).send(insertResult);
-        break;
-      case 'updateOne':
-        const updateResult = await coll.updateOne(operationParams.filter, operationParams.update);
-        res.status(200).send(updateResult);
-        break;
-      case 'deleteOne':
-        const deleteResult = await coll.deleteOne(operationParams);
-        res.status(200).send(deleteResult);
-        break;
-      default:
-        res.status(400).send({ error: 'Unsupported operation' });
-    }
+    validateCommand(command);
+    const processedCommand = preprocessCommand(command);
     
+    const db = dbClients[sessionId].db;
+    const result = await new Function('db', `return ${processedCommand}`)(db);
+    res.status(200).send(result?.toArray ? await result.toArray() : result);
   } catch (error) {
     res.status(400).send({ error: error.message });
   }
