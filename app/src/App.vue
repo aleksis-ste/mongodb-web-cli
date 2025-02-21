@@ -58,6 +58,16 @@
             </option>
           </select>
         </div>
+        <div v-if="collections.length > 0" class="mb-4">
+          <h2 class="text-lg font-bold mb-2">Available Collections:</h2>
+          <span
+            v-for="collection in collections"
+            :key="collection"
+            class="inline-flex items-center px-3 py-1 mr-1 bg-gray-200 text-gray-800 rounded-full text-sm font-medium hover:bg-gray-300 transition duration-200"
+          >
+            {{ collection }}
+          </span>
+        </div>
         <div v-if="selectedDatabase">
           <div class="relative mb-4">
             <prism-editor
@@ -100,16 +110,14 @@
 <script lang="js">
 import axios from "axios";
 import { PrismEditor } from "vue-prism-editor";
-import "vue-prism-editor/dist/prismeditor.min.css"; // import the styles somewhere
+import "vue-prism-editor/dist/prismeditor.min.css";
 
-// import highlighting library (you can use any library you want just return html string)
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-json";
-import "prismjs/themes/prism-tomorrow.css"; // import syntax highlighting styles
+import "prismjs/themes/prism-tomorrow.css";
 
-// Configure Axios to send cookies with requests
 axios.defaults.withCredentials = true;
 
 export default {
@@ -121,6 +129,7 @@ export default {
       results: [],
       connected: false,
       databases: [],
+      collections: [],
       errorMessage: "",
       successMessage: "",
     };
@@ -173,12 +182,21 @@ export default {
           );
           if (response.data.message === "Database selected successfully") {
             this.successMessage = "Database selected successfully";
+            await this.fetchCollections();
           }
         } catch (error) {
           this.errorMessage = error.response
             ? error.response.data.error
             : error.message;
         }
+      }
+    },
+    async fetchCollections() {
+      try {
+        const response = await axios.get('http://localhost:5000/databases/collections');
+        this.collections = response.data;
+      } catch (error) {
+        this.errorMessage = error.response ? error.response.data.error : error.message;
       }
     },
     async handleQuery() {
@@ -218,7 +236,7 @@ export default {
       }
     },
     highlighter(code) {
-      return highlight(code, languages.js); // languages.<insert language> to return html with markup
+      return highlight(code, languages.js);
     },
     highlightResult() {
       if (this.$refs.resultOutput) {

@@ -46,7 +46,7 @@ const ALLOWED_METHODS = [
 function cleanUpInactiveSessions() {
   const now = Date.now();
   for (const sessionId in dbClients) {
-    if (sessionTimers[sessionId] && now - sessionTimers[sessionId] > 1 * 60 * 1000) { // 10 minutes
+    if (sessionTimers[sessionId] && now - sessionTimers[sessionId] > 10 * 60 * 1000) { // 10 minutes
       dbClients[sessionId].client.close();
       delete dbClients[sessionId];
       delete sessionTimers[sessionId];
@@ -117,6 +117,22 @@ app.post('/databases/select', async (req, res) => {
     dbClients[sessionId].db = client.db(databaseName);
     sessionTimers[sessionId] = Date.now();
     res.status(200).send({ message: 'Database selected successfully' });
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+});
+
+app.get('/databases/collections', async (req, res) => {
+  const sessionId = req.session.id;
+  if (!dbClients[sessionId]) {
+    return res.status(400).send({ error: 'Not connected to database' });
+  }
+  sessionTimers[sessionId] = Date.now();
+  try {
+    const db = dbClients[sessionId].db;
+    const collections = await db.listCollections().toArray();
+    const collectionNames = collections.map(col => col.name);
+    res.status(200).send(collectionNames);
   } catch (error) {
     res.status(400).send({ error: error.message });
   }
