@@ -119,7 +119,7 @@ import "prismjs/components/prism-json";
 import "prismjs/themes/prism-tomorrow.css";
 
 axios.defaults.withCredentials = true;
-
+axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 export default {
   data() {
     return {
@@ -144,7 +144,7 @@ export default {
       this.successMessage = "";
       try {
         const response = await axios.post(
-          "http://localhost:5000/databases/connect",
+          "/databases/connect",
           { connectionString: this.connectionString }
         );
         if (response.data.message === "Connected successfully") {
@@ -161,7 +161,7 @@ export default {
     async fetchDatabases() {
       this.errorMessage = "";
       try {
-        const response = await axios.get("http://localhost:5000/databases", {
+        const response = await axios.get("/databases", {
           params: { connectionString: this.connectionString },
         });
         this.databases = response.data;
@@ -177,7 +177,7 @@ export default {
       if (this.selectedDatabase) {
         try {
           const response = await axios.post(
-            "http://localhost:5000/databases/select",
+            "/databases/select",
             { databaseName: this.selectedDatabase }
           );
           if (response.data.message === "Database selected successfully") {
@@ -193,7 +193,7 @@ export default {
     },
     async fetchCollections() {
       try {
-        const response = await axios.get('http://localhost:5000/databases/collections');
+        const response = await axios.get('/databases/collections');
         this.collections = response.data;
       } catch (error) {
         this.errorMessage = error.response ? error.response.data.error : error.message;
@@ -205,7 +205,7 @@ export default {
       try {
         const command = this.query;
         const response = await axios.post(
-          "http://localhost:5000/databases/query",
+          "/databases/query",
           { command }
         );
         this.results = response.data;
@@ -221,7 +221,7 @@ export default {
       this.errorMessage = '';
       this.successMessage = '';
       try {
-        const response = await axios.post('http://localhost:5000/databases/end-session');
+        const response = await axios.post('/databases/end-session');
         if (response.data.message === 'Session ended successfully') {
           this.connected = false;
           this.selectedDatabase = '';
