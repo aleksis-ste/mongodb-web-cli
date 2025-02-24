@@ -1,109 +1,68 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-5xl">
+  <div class="min-h-screen flex flex-col items-center justify-between bg-gray-100">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-5xl mt-10">
       <div v-if="!connected">
-        <div
-          v-if="errorMessage"
-          class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded"
-        >
+        <div v-if="errorMessage" class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
           {{ errorMessage }}
         </div>
-        <div
-          v-if="successMessage"
-          class="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded"
-        >
+        <div v-if="successMessage" class="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
           {{ successMessage }}
         </div>
         <h1 class="text-2xl font-bold mb-4">MongoDB Connection</h1>
-        <input
-          v-model="connectionString"
-          type="text"
-          placeholder="Enter MongoDB Connection String"
-          class="w-full p-3 border border-gray-300 rounded mb-4 focus:outline-none focus:border-blue-500"
-        />
-        <button
-          @click="handleConnect"
-          class="bg-blue-500 text-white py-3 px-6 rounded hover:bg-blue-600 focus:outline-none"
-        >
+        <input v-model="connectionString" type="text" placeholder="Enter MongoDB Connection String"
+          class="w-full p-3 border border-gray-300 rounded mb-4 focus:outline-none focus:border-blue-500" />
+        <button @click="handleConnect"
+          class="bg-blue-500 text-white py-3 px-6 rounded hover:bg-blue-600 focus:outline-none">
           Connect
         </button>
       </div>
       <div v-else>
         <div class="flex justify-between">
           <h1 class="text-2xl font-bold mb-4">MongoDB CLI</h1>
-          <button
-            @click="handleEndSession"
-            class="ml-4 bg-red-500 text-white py-3 px-6 rounded hover:bg-red-600 focus:outline-none"
-          >
+          <button @click="handleEndSession"
+            class="ml-4 bg-red-500 text-white py-3 px-6 rounded hover:bg-red-600 focus:outline-none">
             End Session
           </button>
         </div>
         <div class="mb-4">
-          <label for="database" class="block text-sm font-medium text-gray-700"
-            >Select Database:</label
-          >
-          <select
-            id="database"
-            v-model="selectedDatabase"
-            @change="handleDatabaseChange"
-            class="mt-1 block w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-          >
+          <label for="database" class="block text-sm font-medium text-gray-700">Select Database:</label>
+          <select id="database" v-model="selectedDatabase" @change="handleDatabaseChange"
+            class="mt-1 block w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
             <option disabled value="">Please select a database</option>
-            <option
-              v-for="database in databases"
-              :key="database"
-              :value="database"
-            >
+            <option v-for="database in databases" :key="database" :value="database">
               {{ database }}
             </option>
           </select>
         </div>
         <div v-if="collections.length > 0" class="mb-4">
           <h2 class="text-lg font-bold mb-2">Available Collections:</h2>
-          <span
-            v-for="collection in collections"
-            :key="collection"
-            class="inline-flex items-center px-3 py-1 mr-1 bg-gray-200 text-gray-800 rounded-full text-sm font-medium hover:bg-gray-300 transition duration-200"
-          >
+          <span v-for="collection in collections" :key="collection"
+            class="inline-flex items-center px-3 py-1 mr-1 bg-gray-200 text-gray-800 rounded-full text-sm font-medium hover:bg-gray-300 transition duration-200">
             {{ collection }}
           </span>
         </div>
         <div v-if="selectedDatabase">
           <div class="relative mb-4">
-            <prism-editor
-              class="query-editor"
-              v-model="query"
-              :highlight="highlighter"
-              line-numbers
-            >
+            <prism-editor class="query-editor" v-model="query" :highlight="highlighter" line-numbers>
             </prism-editor>
           </div>
-          <button
-            @click="handleQuery"
-            class="bg-blue-500 text-white py-3 px-6 rounded hover:bg-blue-600 focus:outline-none"
-          >
+          <button @click="handleQuery"
+            class="bg-blue-500 text-white py-3 px-6 rounded hover:bg-blue-600 focus:outline-none">
             Run Query
           </button>
-          <div
-            v-if="errorMessage"
-            class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded"
-          >
+          <div v-if="errorMessage" class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             {{ errorMessage }}
           </div>
-          <div
-            v-if="successMessage"
-            class="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded"
-          >
+          <div v-if="successMessage" class="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
             {{ successMessage }}
           </div>
-          <pre
-            class="mt-4 bg-gray-900 text-white p-4 rounded overflow-auto h-96"
-          >
+          <pre class="mt-4 bg-gray-900 text-white p-4 rounded overflow-auto h-96">
             <code ref="resultOutput" class="language-json"></code>
           </pre>
         </div>
       </div>
     </div>
+    <Footer />
   </div>
 </template>
 
@@ -111,6 +70,8 @@
 import axios from "axios";
 import { PrismEditor } from "vue-prism-editor";
 import "vue-prism-editor/dist/prismeditor.min.css";
+
+import Footer from "./components/Footer.vue";
 
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
@@ -135,9 +96,10 @@ export default {
     };
   },
   components: {
+    Footer,
     PrismEditor,
   },
-  mounted() {},
+  mounted() { },
   methods: {
     async handleConnect() {
       this.errorMessage = "";
@@ -251,6 +213,10 @@ export default {
 };
 </script>
 <style>
+body, html {
+  padding: 0px;
+}
+
 .query-editor {
   background: #2d2d2d;
   color: #ccc;
